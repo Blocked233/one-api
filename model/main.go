@@ -1,14 +1,15 @@
 package model
 
 import (
-	"gorm.io/driver/mysql"
-	"gorm.io/driver/postgres"
-	"gorm.io/driver/sqlite"
-	"gorm.io/gorm"
 	"one-api/common"
 	"os"
 	"strings"
 	"time"
+
+	"gorm.io/driver/mysql"
+	"gorm.io/driver/postgres"
+	"gorm.io/driver/sqlite"
+	"gorm.io/gorm"
 )
 
 var DB *gorm.DB
@@ -37,6 +38,15 @@ func createRootAccountIfNeed() error {
 }
 
 func chooseDB() (*gorm.DB, error) {
+	// Use Azure SQL
+	if os.Getenv("AZURE_SQL_SERVER") != "" {
+		common.SysLog("using Azure SQL as database")
+		return initAzureSql(AzureSqlConfig{
+			Server:   os.Getenv("AZURE_SQL_SERVER"),
+			Port:     common.GetOrDefault("AZURE_SQL_PORT", 1433),
+			Database: os.Getenv("AZURE_SQL_DATABASE"),
+		})
+	}
 	if os.Getenv("SQL_DSN") != "" {
 		dsn := os.Getenv("SQL_DSN")
 		if strings.HasPrefix(dsn, "postgres://") {
